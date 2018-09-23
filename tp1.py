@@ -5,7 +5,7 @@ from numpy import linalg as LA
 
 # CONSTANTES DEL PROBLEMA
 # Numero de grupo
-G = 1 # Supongo que somos el grupo 1 para ir calculando hasta que publiquen los numeros
+G = 3
 # Largo de la viga
 L = 1
 # Producto entre el modulo de Young y el momento de Inercia
