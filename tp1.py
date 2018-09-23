@@ -40,7 +40,7 @@ def exportarTablaSOR( file, info, n, w ):
 		f.write( ",x" + repr(i) )
 	f.write( "\n" )
 	for r in info:
-		f.write( repr(r[0]) + "," + repr(r[1]) + "," + repr(math.log(r[1])) + "," + repr(r[2]) )
+		f.write( repr(r[0]) + "," + repr(r[1]) + "," + repr(math.log10(r[1])) + "," + repr(r[2]) )
 		for i in range(0,d):
 			f.write( "," + repr(r[3][i]) )
 		f.write( "\n" )
