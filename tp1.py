@@ -16,6 +16,8 @@ FLOAT = np.float64
 # ARCHIVOS DE EXPORTACION
 FILE_W = "exports\\W"
 FILE_SOR = "exports\\SOR"
+FILE_MATRICIAL = "_MAT"
+FILE_ANALITICO = "_ANAL"
 FILE_EXTENSION = ".csv"
 
 # Exporta una tabla con el muestreo de factores w y sus iteraciones con discretizacion 'n'
@@ -172,7 +174,7 @@ def calcularSOR( A, x, b, w, rtol, matricial=False ):
 	return datos
 
 # Hace un muestreo de las cantidad de iteraciones para factores w en el intervalo ('wMin', 'wMax'] con incrementos 'inc' para resolver por SOR la ecuacion 'A x = b' a partir de una semilla 'x' con una tolerancia relativa 'rtol'
-def samplearW( A, x, b, wMin, wMax, inc, rtol ):
+def samplearW( A, x, b, wMin, wMax, inc, rtol, matricial=False ):
 	print( "Sampleando W .." )
 	# resuelvo para cada w
 	c = math.floor( (wMax - wMin)/inc )
@@ -181,7 +183,7 @@ def samplearW( A, x, b, wMin, wMax, inc, rtol ):
 	wOpt = wMin
 	for i in range(0,c):
 		w = wMin+i*inc
-		datos = calcularSOR( A, x, b, w, rtol )
+		datos = calcularSOR( A, x, b, w, rtol, matricial )
 		k = len( datos ) - 1
 		info.append( [w, k] )
 		if ( k<kOpt ):
@@ -191,36 +193,44 @@ def samplearW( A, x, b, wMin, wMax, inc, rtol ):
 	return wOpt, info
 
 # Estima el factor w optimo con incrementos 'inc' para resolver por SOR una discretizacion 'n' del problema con una tolerancia relativa 'rtol'
-def estimarWOptimo( n, inc, rtol ):
+def estimarWOptimo( n, inc, rtol, matricial=False ):
 	print( "Estimando W optimo para n=" + repr(n) + ":" )
 	A, b = generar( n )
 	x = np.zeros(b.shape[0], FLOAT)
-	w, info = samplearW( A, x, b, 1, 2, inc, rtol )
+	w, info = samplearW( A, x, b, 1, 2, inc, rtol, matricial )
 	print( "Factor optimo estimado. w=" + repr(w) )
-	exportarTablaW( FILE_W + repr(n) + FILE_EXTENSION, info, n )
+	exportarTablaW( FILE_W + repr(n) + (FILE_MATRICIAL if matricial else FILE_ANALITICO) + FILE_EXTENSION, info, n )
 	return w
 
 # Resuelvo el problema por SOR con el factor 'w', discretizacion 'n' y tolerancia 'rtol'
-def resolver( n, w, rtol ):
+def resolver( n, w, rtol, matricial=False ):
 	print( "Resolviendo para n=" + repr(n) + " w=" + repr(w) + ":" )
 	A, b = generar( n )
 	x = np.zeros(b.shape[0], FLOAT)
-	info = calcularSOR( A, x, b, w, rtol )
+	info = calcularSOR( A, x, b, w, rtol, matricial )
 	print( "Resuelto." )
-	exportarTablaSOR( FILE_SOR + repr(n) + FILE_EXTENSION, info, n, w )
+	exportarTablaSOR( FILE_SOR + repr(n) + (FILE_MATRICIAL if matricial else FILE_ANALITICO) + FILE_EXTENSION, info, n, w )
 
-# Estimo los w optimos para cada discretizacion
-print( "--------------------------------" )
-w5 = estimarWOptimo( 5, 0.05, 0.01 )
-print( "--------------------------------" )
-w10 = estimarWOptimo( 10, 0.05, 0.01 )
-print( "--------------------------------" )
-w100 = estimarWOptimo( 100, 0.05, 0.01 )
+# Hace una resolucion del trabajo practico de forma 'matricial' o analitica
+def resolverTP( matricial ):
+	# Estimo los w optimos para cada discretizacion
+	print( "--------------------------------" )
+	w5 = estimarWOptimo( 5, 0.05, 0.01, matricial )
+	print( "--------------------------------" )
+	w10 = estimarWOptimo( 10, 0.05, 0.01, matricial )
+	print( "--------------------------------" )
+	w100 = estimarWOptimo( 100, 0.05, 0.01, matricial )
 
-# Resuelvo el problema para cada discretizacion
-print( "--------------------------------" )
-resolver( 5, w5, 0.0001 )
-print( "--------------------------------" )
-resolver( 10, w10, 0.0001 )
-print( "--------------------------------" )
-resolver( 100, w100, 0.0001 )
+	# Resuelvo el problema para cada discretizacion
+	print( "--------------------------------" )
+	resolver( 5, w5, 0.0001, matricial )
+	print( "--------------------------------" )
+	resolver( 10, w10, 0.0001, matricial )
+	print( "--------------------------------" )
+	resolver( 100, w100, 0.0001, matricial )
+
+# Resuelvo el TP de manera matricial
+resolverTP( True )
+
+# Resuelvo el TP de manera analitica
+resolverTP( False )
