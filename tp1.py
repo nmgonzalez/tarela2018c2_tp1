@@ -91,7 +91,7 @@ def generar( n ):
 	
 	return A, b
 
-# Resuelve por el metodo SOR la ecuacion 'A x = b' con a partir de la semilla 'x', el factor 'w' y la tolerancia relativa 'rtol' y devuelve el resultado
+# Resuelve por el metodo SOR con calculo matricial la ecuacion 'A x = b' a partir de la semilla 'x', el factor 'w' y la tolerancia relativa 'rtol' y devuelve el resultado
 def calcularSOR( A, x, b, w, rtol ):
 	# datos de arranque: k=0, |Er|, p, x
 	datos = [ [0,1,1,x] ]
@@ -132,8 +132,50 @@ def calcularSOR( A, x, b, w, rtol ):
 	e2 = 0 # delta x anterior al anterior
 	while( k<999999 ): # limite de iteraciones para prevenir loops infinitos en caso de divergencias
 		k += 1 # cuento la iteracion
-		x_ = x # solucion previa
+		x_ = np.copy( x ) # copio solucion previa
 		x = np.matmul( Tsor, x_) + Csor # calculo el x
+		# errores previos
+		e2 = e1
+		e1 = e
+		e = LA.norm(x-x_)
+		Er = e / LA.norm(x) # error relativo
+		# calculo de p
+		p = (math.log(e/e1) / math.log(e1/e2)) if (k>3) else 1
+		# agrego datos de la iteracion actual
+		datos.append( [k, Er, p, x] )
+		# pruebo la tolerancia
+		if ( Er <= rtol ):
+			break
+	
+	print( " Calculado." )
+	return datos
+
+# Resuelve por el metodo SOR con calculo analitico la ecuacion 'A x = b' a partir de la semilla 'x', el factor 'w' y la tolerancia relativa 'rtol' y devuelve el resultado
+def calcularSORAnalitico( A, x, b, w, rtol ):
+	# datos de arranque: k=0, |Er|, p, x
+	datos = [ [0,1,1,x] ]
+	
+	# dimension
+	d = b.shape[0]
+	print( "\tCalculando SOR analitico dim=" + repr(d) + " w=" + repr(w) + " rtol=" + repr(rtol) + ".", end='' )
+	
+	# calculo SOR
+	k = 0 # iteraciones
+	e = 0 # delta x actual
+	e1 = 0 # delta x anterior
+	e2 = 0 # delta x anterior al anterior
+	while( k<999999 ): # limite de iteraciones para prevenir loops infinitos en caso de divergencias
+		k += 1 # cuento la iteracion
+		x_ = np.copy( x ) # copio solucion previa
+		
+		# calculo el x
+		x[0] = 0
+		x[1] = w * (b[1] + 4*x[0] + 4*x[2] - x[3] ) / 5 + (1-w) * x[1]
+		for i in range(2,d-2):
+			x[i] = w * (b[i] - x[i-2] + 4*x[i-1] + 4*x[i+1] - x[i+2] ) / 6 + (1-w) * x[i]
+		x[d-2] = w * (b[d-2] + 4*x[d-1] + 4*x[d-3] - x[d-4] ) / 5 + (1-w) * x[d-2]
+		x[d-1] = 0
+		
 		# errores previos
 		e2 = e1
 		e1 = e
