@@ -93,6 +93,13 @@ def generar( n ):
 	
 	return A, b
 
+# Genera una semilla arbitraria de 'n' elementos
+def generarSemilla( n ):
+	s = np.zeros(n, FLOAT)
+	for i in range(0, s.shape[0]):
+		s[i] = 0.1 - 0.1 * math.pow(2*i/(n-1)-1, 2)
+	return s
+	
 # Calcula el resultado de una iteracion del metodo SOR de forma matricial para 'Tsor' 'Csor' y 'x'
 def calcularIteracionSORMatricial( Tsor, Csor, x ):
 	return np.matmul(Tsor, x) + Csor
@@ -197,7 +204,7 @@ def samplearW( A, x, b, wMin, wMax, inc, rtol, matricial=False ):
 def estimarWOptimo( n, inc, rtol, matricial=False ):
 	print( "Estimando W optimo para n=" + repr(n) + ":" )
 	A, b = generar( n )
-	x = np.zeros(b.shape[0], FLOAT)
+	x = generarSemilla( n+1 )
 	w, info = samplearW( A, x, b, 1, 2, inc, rtol, matricial )
 	print( "Factor optimo estimado. w=" + repr(w) )
 	exportarTablaW( FILE_W + repr(n) + (FILE_MATRICIAL if matricial else FILE_ANALITICO) + FILE_EXTENSION, info, n )
@@ -207,7 +214,7 @@ def estimarWOptimo( n, inc, rtol, matricial=False ):
 def resolver( n, w, rtol, matricial=False ):
 	print( "Resolviendo para n=" + repr(n) + " w=" + repr(w) + ":" )
 	A, b = generar( n )
-	x = np.zeros(b.shape[0], FLOAT)
+	x = generarSemilla( n+1 )
 	info = calcularSOR( A, x, b, w, rtol, matricial )
 	print( "Resuelto." )
 	exportarTablaSOR( FILE_SOR + repr(n) + (FILE_MATRICIAL if matricial else FILE_ANALITICO) + FILE_EXTENSION, info, n, w )
