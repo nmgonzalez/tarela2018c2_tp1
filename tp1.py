@@ -94,24 +94,25 @@ def generar( n ):
 	return A, b
 
 # Calcula el resultado de una iteracion del metodo SOR de forma matricial para 'Tsor' 'Csor' y 'x'
-def calcularIteracionSOR( Tsor, Csor, x ):
-	return np.matmul( Tsor, x) + Csor
+def calcularIteracionSORMatricial( Tsor, Csor, x ):
+	return np.matmul(Tsor, x) + Csor
 
 # Calcula el resultado de una iteracion del metodo SOR de forma analitica 'x', 'b' y el factor 'w'
 def calcularIteracionSORAnalitico( x, b, w ):
 	d = b.shape[0]
-	x[0] = 0
-	x[1] = w * (b[1] + 4*x[0] + 4*x[2] - x[3] ) / 5 + (1-w) * x[1]
+	r = np.copy(x)
+	r[0] = 0
+	r[1] = w * (b[1] + 4*r[0] + 4*r[2] - r[3] ) / 5 + (1-w) * r[1]
 	for i in range(2,d-2):
-		x[i] = w * (b[i] - x[i-2] + 4*x[i-1] + 4*x[i+1] - x[i+2] ) / 6 + (1-w) * x[i]
-	x[d-2] = w * (b[d-2] + 4*x[d-1] + 4*x[d-3] - x[d-4] ) / 5 + (1-w) * x[d-2]
-	x[d-1] = 0
-	return x
+		r[i] = w * (b[i] - r[i-2] + 4*r[i-1] + 4*r[i+1] - r[i+2] ) / 6 + (1-w) * r[i]
+	r[d-2] = w * (b[d-2] + 4*r[d-1] + 4*r[d-3] - r[d-4] ) / 5 + (1-w) * r[d-2]
+	r[d-1] = 0
+	return r
 
 # Resuelve por el metodo SOR la ecuacion 'A x = b' a partir de la semilla 'x', el factor 'w' y la tolerancia relativa 'rtol' y devuelve el resultado
 def calcularSOR( A, x, b, w, rtol, matricial=False ):
 	# datos de arranque: k=0, |Er|, p, x
-	datos = [ [0,1,1,x] ]
+	datos = [ [0,1,1,np.copy(x)] ]
 	
 	# dimension
 	d = b.shape[0]
@@ -153,7 +154,7 @@ def calcularSOR( A, x, b, w, rtol, matricial=False ):
 		
 		# calculo el x
 		if ( matricial ):
-			x = calcularIteracionSOR( Tsor, Csor, x )
+			x = calcularIteracionSORMatricial( Tsor, Csor, x )
 		else:
 			x = calcularIteracionSORAnalitico( x, b, w )
 		
@@ -165,7 +166,7 @@ def calcularSOR( A, x, b, w, rtol, matricial=False ):
 		# calculo de p
 		p = (math.log(e/e1) / math.log(e1/e2)) if (k>3) else 1
 		# agrego datos de la iteracion actual
-		datos.append( [k, Er, p, x] )
+		datos.append( [k, Er, p, np.copy(x)] )
 		# pruebo la tolerancia
 		if ( Er <= rtol ):
 			break
