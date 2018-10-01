@@ -155,7 +155,8 @@ def calcularSOR( A, x, b, w, rtol, matricial=False ):
 	e = 0 # delta x actual
 	e1 = 0 # delta x anterior
 	e2 = 0 # delta x anterior al anterior
-	while( k<999999 ): # limite de iteraciones para prevenir loops infinitos en caso de divergencias
+	Er = 1
+	while( Er > rtol and k<999999 ): # limite de iteraciones para prevenir loops infinitos en caso de divergencias
 		k += 1 # cuento la iteracion
 		x_ = np.copy( x ) # copio solucion previa
 		
@@ -175,8 +176,6 @@ def calcularSOR( A, x, b, w, rtol, matricial=False ):
 		# agrego datos de la iteracion actual
 		datos.append( [k, Er, p, np.copy(x)] )
 		# pruebo la tolerancia
-		if ( Er <= rtol ):
-			break
 	
 	print( " k=" + repr(k) + "." )
 	return datos
