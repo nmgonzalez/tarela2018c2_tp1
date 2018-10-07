@@ -214,7 +214,7 @@ def estimarWOptimo(n, inc, rtol, matricial=False):
     v = generarSemilla(n + 1)
     w, info = samplearW(K, v, f, 1, 2, inc, rtol, matricial)
     print("Factor optimo estimado. w=" + format(w,".2f"))
-    #exportarTablaW(FILE_W + repr(n) + (FILE_MATRICIAL if matricial else FILE_INDICIAL) + FILE_EXTENSION, info, n)
+    exportarTablaW(FILE_W + repr(n) + (FILE_MATRICIAL if matricial else FILE_INDICIAL) + FILE_EXTENSION, info, n)
     return w
 
 
