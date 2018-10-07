@@ -32,20 +32,20 @@ def exportarTablaW(file, info, n):
     print("\tArchivo '" + file + "' exportado.")
 
 
-# Exporta una tabla con los calculos de cada iteracion del metodo SOR con discretizacion 'n' y el factor 'w'
-def exportarTablaSOR(file, info, n, w):
-    print("\n* Exportando calculos SOR para n=" + repr(n) + " w=" + repr(w) + ":")
-    d = info[0][3].shape[0]  # dimension del resultado
+# Exporta una tabla con los calculos de cada iteracion del metodo SOR con discretizacion 'n' y el factor 'w' y orden de convergencia 'p'
+def exportarTablaSOR(file, info, n, w, p):
+    print("\n* Exportando calculos SOR para n=" + repr(n) + " w=" + format(w,".2f") + " p=" + format(p,".2f") + ":")
+    d = info[0][2].shape[0]  # dimension del resultado
     f = open(file, "w")
-    f.write("n," + repr(n) + ",w optimo," + repr(w) + "\n")
-    f.write("k,|Er|,log|Er|,p")
+    f.write("n," + repr(n) + ",w optimo," + repr(w) + ",p," + repr(p) + "\n")
+    f.write("k,|Er|,log|Er|")
     for i in range(0, d):
-        f.write(",x" + repr(i))
+        f.write(",v[" + repr(i) + "]")
     f.write("\n")
     for r in info:
-        f.write(repr(r[0]) + "," + repr(r[1]) + "," + repr(math.log10(r[1])) + "," + repr(r[2]))
+        f.write(repr(r[0]) + "," + repr(r[1]) + "," + repr(math.log10(r[1])) )
         for i in range(0, d):
-            f.write("," + repr(r[3][i]))
+            f.write("," + repr(r[2][i]))
         f.write("\n")
     f.close()
     print("\tArchivo '" + file + "' exportado.")
@@ -56,10 +56,10 @@ def calculoDeCarga(x):
     return G + math.pow(G, 2) * (x - math.pow(x, 2))
 
 
-# Genera la matriz 'A' y el vector 'b' para una discretizacion de 'n' segmentos
+# Genera la matriz 'K' y el vector 'f' para una discretizacion de 'n' segmentos
 def generar(n):
     # genero el vector 'f'
-    print("\tGenerando vector b dim=" + repr(n + 1) + " ..", end='')
+    print("\tGenerando vector f dim=" + repr(n + 1) + " ..", end='')
     f = np.zeros(n + 1, FLOAT)
     f[0] = 0
     for i in range(1, n):
@@ -68,7 +68,7 @@ def generar(n):
     print(" Generado. ")
 
     # genero la matriz 'K'
-    print("\tGenerando matrix K dim=" + repr(n + 1) + "v" + repr(n + 1) + " ..", end='')
+    print("\tGenerando matrix K dim=" + repr(n + 1) + "x" + repr(n + 1) + " ..", end='')
     K = np.zeros((n + 1, n + 1), FLOAT)
     # fila: 0
     K[0][0] = 1
@@ -79,17 +79,16 @@ def generar(n):
     K[1][3] = 1
     # filas: 1 < i < n-1
     for j in range(2, n - 1):
-        offset = j - 2
-        K[j][offset + 0] = 1
-        K[j][offset + 1] = -4
-        K[j][offset + 2] = 6
-        K[j][offset + 3] = -4
-        K[j][offset + 4] = 1
+        K[j][j-2] = 1
+        K[j][j-1] = -4
+        K[j][j+0] = 6
+        K[j][j+1] = -4
+        K[j][j+2] = 1
     # fila: n-1
-    K[n - 1][n - 3] = 1
-    K[n - 1][n - 2] = -4
-    K[n - 1][n - 1] = 5
-    K[n - 1][n] = -4
+    K[n-1][n-3] = 1
+    K[n-1][n-2] = -4
+    K[n-1][n-1] = 5
+    K[n-1][n] = -4
     # fila: n
     K[n][n] = 1
     print(" Generada. ")
@@ -110,7 +109,7 @@ def calcularIteracionSORMatricial(Tsor, Csor, v):
     return np.matmul(Tsor, v) + Csor
 
 
-# Calcula el resultado de una iteracion del metodo SOR de forma indicial 'v', 'f' y el factor 'w'
+# Calcula el resultado de una iteracion del metodo SOR de forma indicial para 'v', 'f' y el factor 'w'
 def calcularIteracionSORIndicial(v, f, w):
     d = f.shape[0]
     r = np.copy(v)
@@ -125,14 +124,12 @@ def calcularIteracionSORIndicial(v, f, w):
 
 # Resuelve por el metodo SOR la ecuacion 'K v = f' a partir de la semilla 'v', el factor 'w' y la tolerancia relativa 'rtol' y devuelve el resultado
 def calcularSOR(K, v, f, w, rtol, matricial=False):
-    # datos de arranque: k=0, |Er|, p, x
-    datos = [[0, 1, 1, np.copy(v)]]
+    # datos de arranque: k=0, |Er|, x
+    datos = [[0, 1, np.copy(v)]]
 
     # dimension
     d = f.shape[0]
-    print("\tCalculando SOR " + ("matricial" if matricial else "indicial") + " dim=" + repr(d) + " w=" + format(w,
-                                                                                                                 ".2f") + " rtol=" + repr(
-        rtol) + ".", end='')
+    print("\tCalculando SOR " + ("matricial" if matricial else "indicial") + " dim=" + repr(d) + " w=" + format(w,".2f") + " rtol=" + repr(rtol), end='')
 
     # matriz diagonal
     D = np.zeros((d, d), FLOAT)
@@ -160,12 +157,12 @@ def calcularSOR(K, v, f, w, rtol, matricial=False):
     Csor = np.matmul(w * DwLi, f)
 
     # calculo SOR
-    k = 0  # iteraciones
-    e = 0  # delta x actual
-    e1 = 0  # delta x anterior
-    e2 = 0  # delta x anterior al anterior
-    Er = 1
-    while (Er > rtol and k < 999999):  # limite de iteraciones para prevenir loops infinitos en caso de divergencias
+    k = 0 # iteraciones
+    e = 0 # delta x actual
+    e1 = 0 # delta x anterior
+    e2 = 0 # delta x anterior al anterior
+    Er = 1 # error relativo
+    while (Er > rtol and k < 999999):  # pruebo la tolerancia y un limite de iteraciones para prevenir loops infinitos en caso de divergencias
         k += 1  # cuento la iteracion
         v_ = np.copy(v)  # copio solucion previa
 
@@ -180,14 +177,14 @@ def calcularSOR(K, v, f, w, rtol, matricial=False):
         e1 = e
         e = LA.norm(v - v_)
         Er = e / LA.norm(v)  # error relativo
-        # calculo de p
-        p = (math.log(e / e1) / math.log(e1 / e2)) if (k > 3) else 1
         # agrego datos de la iteracion actual
-        datos.append([k, Er, p, np.copy(v)])
-    # pruebo la tolerancia
+        datos.append([k, Er, np.copy(v)])
 
-    print(" k=" + repr(k) + ".")
-    return datos
+    # calculo el orden de convergencia p
+    p = (math.log(e / e1) / math.log(e1 / e2)) if (k > 3) else -1
+
+    print(" k=" + repr(k) + " p=" + format(p,".2f") + ".")
+    return datos, k, p
 
 
 # Hace un muestreo de las cantidad de iteraciones para factores w en el intervalo ('wMin', 'wMax'] con incrementos 'inc' para resolver por SOR la ecuacion 'K v = f' a partir de una semilla 'v' con una tolerancia relativa 'rtol'
@@ -200,8 +197,8 @@ def samplearW(K, v, f, wMin, wMax, inc, rtol, matricial=False):
     wOpt = wMin
     for i in range(0, c):
         w = wMin + i * inc
-        datos = calcularSOR(K, v, f, w, rtol, matricial)
-        k = len(datos) - 1
+        datos, k, p = calcularSOR(K, v, f, w, rtol, matricial)
+        #k = len(datos) - 1
         info.append([w, k])
         if (k < kOpt):
             kOpt = k
@@ -216,39 +213,38 @@ def estimarWOptimo(n, inc, rtol, matricial=False):
     K, f = generar(n)
     v = generarSemilla(n + 1)
     w, info = samplearW(K, v, f, 1, 2, inc, rtol, matricial)
-    print("Factor optimo estimado. w=" + repr(w))
-    exportarTablaW(FILE_W + repr(n) + (FILE_MATRICIAL if matricial else FILE_INDICIAL) + FILE_EXTENSION, info, n)
+    print("Factor optimo estimado. w=" + format(w,".2f"))
+    #exportarTablaW(FILE_W + repr(n) + (FILE_MATRICIAL if matricial else FILE_INDICIAL) + FILE_EXTENSION, info, n)
     return w
 
 
-# Resuelvo el problema por SOR con el factor 'w', discretizacion 'n' y tolerancia 'rtol'
+# Resuelve el problema por SOR con el factor 'w', discretizacion 'n' y tolerancia 'rtol'
 def resolver(n, w, rtol, matricial=False):
-    print("Resolviendo para n=" + repr(n) + " w=" + repr(w) + ":")
+    print("Resolviendo para n=" + repr(n) + " w=" + format(w,".2f") + ":")
     K, f = generar(n)
     v = generarSemilla(n + 1)
-    info = calcularSOR(K, v, f, w, rtol, matricial)
+    info, k, p = calcularSOR(K, v, f, w, rtol, matricial)
     print("Resuelto.")
-    exportarTablaSOR(FILE_SOR + repr(n) + (FILE_MATRICIAL if matricial else FILE_INDICIAL) + FILE_EXTENSION, info, n,
-                     w)
+    exportarTablaSOR(FILE_SOR + repr(n) + (FILE_MATRICIAL if matricial else FILE_INDICIAL) + FILE_EXTENSION, info, n, w, p)
 
 
 # Hace una resolucion del trabajo practico de forma 'matricial' o 'indicial'
 def resolverTP(matricial):
     # Estimo los w optimos para cada discretizacion
-    print("--------------------------------")
+    print("\n--------------------------------")
     w5 = estimarWOptimo(5, 0.05, 0.01, matricial)
-    print("--------------------------------")
+    print("\n--------------------------------")
     w10 = estimarWOptimo(10, 0.05, 0.01, matricial)
-    print("--------------------------------")
-    w100 = estimarWOptimo(100, 0.05, 0.01, matricial)
+    print("\n--------------------------------")
+    w100 = estimarWOptimo(100, 0.05, 0.00001, matricial)
 
     # Resuelvo el problema para cada discretizacion
-    print("--------------------------------")
+    print("\n--------------------------------")
     resolver(5, w5, 0.0001, matricial)
-    print("--------------------------------")
+    print("\n--------------------------------")
     resolver(10, w10, 0.0001, matricial)
-    print("--------------------------------")
-    resolver(100, w100, 0.0001, matricial)
+    print("\n--------------------------------")
+    resolver(100, w100, 0.0000001, matricial)
 
 
 # Resuelvo el TP de manera matricial
