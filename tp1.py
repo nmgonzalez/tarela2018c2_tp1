@@ -35,17 +35,17 @@ def exportarTablaW(file, info, n):
 # Exporta una tabla con los calculos de cada iteracion del metodo SOR con discretizacion 'n' y el factor 'w'
 def exportarTablaSOR(file, info, n, w):
     print("\n* Exportando calculos SOR para n=" + repr(n) + " w=" + repr(w) + ":")
-    d = info[0][3].shape[0]  # dimension del resultado
+    d = info[0][2].shape[0]  # dimension del resultado
     f = open(file, "w")
-    f.write("n," + repr(n) + ",w optimo," + repr(w) + "\n")
-    f.write("k,|Er|,log|Er|,p")
+    f.write("n=" + repr(n) + ",Woptimo=" + repr(w) + ",P=" + repr(info[-1]) + "\n")
+    f.write("k,|Er|,log|Er|")
     for i in range(0, d):
         f.write(",x" + repr(i))
     f.write("\n")
-    for r in info:
-        f.write(repr(r[0]) + "," + repr(r[1]) + "," + repr(math.log10(r[1])) + "," + repr(r[2]))
+    for r in info[:-1]:
+        f.write(repr(r[0]) + "," + repr(r[1]) + "," + repr(math.log10(r[1])))
         for i in range(0, d):
-            f.write("," + repr(r[3][i]))
+            f.write("," + repr(r[2][i]))
         f.write("\n")
     f.close()
     print("\tArchivo '" + file + "' exportado.")
@@ -126,7 +126,7 @@ def calcularIteracionSORIndicial(v, f, w):
 # Resuelve por el metodo SOR la ecuacion 'K v = f' a partir de la semilla 'v', el factor 'w' y la tolerancia relativa 'rtol' y devuelve el resultado
 def calcularSOR(K, v, f, w, rtol, matricial=False):
     # datos de arranque: k=0, |Er|, p, x
-    datos = [[0, 1, 1, np.copy(v)]]
+    datos = [[0, 1, np.copy(v)]]
 
     # dimension
     d = f.shape[0]
@@ -180,12 +180,15 @@ def calcularSOR(K, v, f, w, rtol, matricial=False):
         e1 = e
         e = LA.norm(v - v_)
         Er = e / LA.norm(v)  # error relativo
-        # calculo de p
-        p = (math.log(e / e1) / math.log(e1 / e2)) if (k > 3) else 1
         # agrego datos de la iteracion actual
-        datos.append([k, Er, p, np.copy(v)])
-    # pruebo la tolerancia
+        datos.append([k, Er, np.copy(v)])
 
+    # calculo de p
+    if (k > 3):
+        p = (math.log(e / e1) / math.log(e1 / e2))
+        datos.append(p)
+
+    # pruebo la tolerancia
     print(" k=" + repr(k) + ".")
     return datos
 
