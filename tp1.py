@@ -198,7 +198,6 @@ def samplearW(K, v, f, wMin, wMax, inc, rtol, matricial=False):
     for i in range(0, c):
         w = wMin + i * inc
         datos, k, p = calcularSOR(K, v, f, w, rtol, matricial)
-        #k = len(datos) - 1
         info.append([w, k])
         if (k < kOpt):
             kOpt = k
