@@ -37,7 +37,7 @@ def exportarTablaSOR(file, info, n, w, p):
     print("\n* Exportando calculos SOR para n=" + repr(n) + " w=" + format(w,".2f") + " p=" + format(p,".2f") + ":")
     d = info[0][2].shape[0]  # dimension del resultado
     f = open(file, "w")
-    f.write("n," + repr(n) + ",w optimo," + repr(w) + ",p," + repr(p) + "\n")
+    f.write("n," + repr(n) + ",Woptimo," + repr(w) + ",P," + repr(p) + "\n")
     f.write("k,|Er|,log|Er|")
     for i in range(0, d):
         f.write(",v[" + repr(i) + "]")
@@ -179,7 +179,6 @@ def calcularSOR(K, v, f, w, rtol, matricial=False):
         Er = e / LA.norm(v)  # error relativo
         # agrego datos de la iteracion actual
         datos.append([k, Er, np.copy(v)])
-
     # calculo el orden de convergencia p
     p = (math.log(e / e1) / math.log(e1 / e2)) if (k > 3) else -1
 
